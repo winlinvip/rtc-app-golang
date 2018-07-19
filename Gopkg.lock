@@ -32,6 +32,12 @@
   version = "1.0.1"
 
 [[projects]]
+  name = "github.com/ossrs/go-oryx-lib"
+  packages = ["http","logger"]
+  revision = "223f7f8586fd18a400248500fd6aabcd7abeb5fb"
+  version = "v0.0.4"
+
+[[projects]]
   name = "github.com/satori/go.uuid"
   packages = ["."]
   revision = "f58768cc1a7a7e77a3bd49e98cdd21419399b6a3"
@@ -40,6 +46,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "753fc8fbdfbb34c7e9a32eb62f717c7f22b72048a9073fc4f4c8c3178ed00f8b"
+  inputs-digest = "d3f5d6666ddb8b6f7ec8d469f4973863f45d952024c38a44f13ff28ed90e1c56"
   solver-name = "gps-cdcl"
   solver-version = 1
