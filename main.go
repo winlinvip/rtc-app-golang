@@ -22,8 +22,11 @@ type ChannelAuth struct {
 	ChannelKey string
 }
 
-func CreateChannel(appId, channelId, regionId, accessKeyId, accessKeySecret string) (*ChannelAuth, error) {
-	client, err := rtc.NewClientWithAccessKey(regionId, accessKeyId, accessKeySecret)
+func CreateChannel(appId, channelId,
+	regionId, accessKeyId, accessKeySecret string,
+) (*ChannelAuth, error) {
+	client, err := rtc.NewClientWithAccessKey(
+		regionId, accessKeyId, accessKeySecret)
 	if err != nil {
 		return nil, err
 	}
@@ -49,7 +52,9 @@ func CreateChannel(appId, channelId, regionId, accessKeyId, accessKeySecret stri
 	}
 }
 
-func BuildToken(channel, channelkey, appid, uid, session, nonce string, timestamp int64) (token string, err error) {
+func BuildToken(channel, channelkey,
+	appid, uid, session, nonce string, timestamp int64,
+) (token string, err error) {
 	h := sha256.New()
 	if _, err = h.Write([]byte(channel)); err != nil {
 		return "", err
