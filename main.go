@@ -97,6 +97,7 @@ func BuildRandom(length int) string {
 func main() {
 	flag.Usage = func() {
 		fmt.Println(fmt.Sprintf("Usage: %v <options>", os.Args[0]))
+		fmt.Println(fmt.Sprintf("	--appid			the id of app"))
 		fmt.Println(fmt.Sprintf("	--listen		listen port"))
 		fmt.Println(fmt.Sprintf("	--access-key-id		the id of access key"))
 		fmt.Println(fmt.Sprintf("	--access-key-secret	the secret of access key"))

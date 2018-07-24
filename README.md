@@ -8,6 +8,12 @@ For all languages:
 * [Java](https://github.com/winlinvip/rtc-app-java).
 * [Golang](https://github.com/winlinvip/rtc-app-golang).
 * [PHP](https://github.com/winlinvip/rtc-app-php).
+* [C#/.Net](https://github.com/winlinvip/rtc-app-csharp).
+
+For RTC deverloper:
+
+* RTC [workflow](https://help.aliyun.com/document_detail/74889.html).
+* RTC [token generation](https://help.aliyun.com/document_detail/74890.html).
 
 ## Usage
 
@@ -29,8 +35,8 @@ AppID: iwo5l81k
 4. Start AppServer, **use your information**:
 
 ```
-git clone https://github.com/winlinvip/rtc-app-golang.git &&
-cd rtc-app-golang &&
+go get -d github.com/winlinvip/rtc-app-golang &&
+cd $GOPATH/src/github.com/winlinvip/rtc-app-golang &&
 go run main.go --listen=8080 --access-key-id=OGAEkdiL62AkwSgs \
 	--access-key-secret=4JaIs4SG4dLwPsQSwGAHzeOQKxO6iw --appid=iwo5l81k \
 	--gslb=https://rgslb.rtc.aliyuncs.com
