@@ -8,7 +8,7 @@ For all languages:
 * [Java](https://github.com/winlinvip/rtc-app-java).
 * [Golang](https://github.com/winlinvip/rtc-app-golang).
 * [PHP](https://github.com/winlinvip/rtc-app-php).
-* [C#/.Net](https://github.com/winlinvip/rtc-app-csharp).
+* [C#](https://github.com/winlinvip/rtc-app-csharp).
 
 For RTC deverloper:
 
