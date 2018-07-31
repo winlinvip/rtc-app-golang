@@ -48,3 +48,8 @@ go run main.go --listen=8080 --access-key-id=OGAEkdiL62AkwSgs \
 > Remark: You can setup client native SDK by `http://30.2.228.19:8080/app/v1`.
 
 > Remark: Please use your AppServer IP instead by `ifconfig eth0`.
+
+## History
+
+* [4b256ca](https://github.com/winlinvip/rtc-app-golang/commit/4b256caaee03c1c80dc29855bb065acbf153f88d), Support recover for some OpenAPI error.
+* Support create channel and sign user token.
