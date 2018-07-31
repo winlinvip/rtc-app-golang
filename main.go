@@ -6,11 +6,13 @@ import (
 	"encoding/hex"
 	"flag"
 	"fmt"
+	rtcErrors "github.com/aliyun/alibaba-cloud-sdk-go/sdk/errors"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/rtc"
 	oh "github.com/ossrs/go-oryx-lib/http"
 	ol "github.com/ossrs/go-oryx-lib/logger"
 	"net/http"
 	"os"
+	"strings"
 	"sync"
 )
 
@@ -20,15 +22,43 @@ type ChannelAuth struct {
 	Nonce      string
 	Timestamp  int64
 	ChannelKey string
+	Recovered  bool
 }
 
-func CreateChannel(appId, channelId,
-	regionId, accessKeyId, accessKeySecret string,
-) (*ChannelAuth, error) {
-	client, err := rtc.NewClientWithAccessKey(
-		regionId, accessKeyId, accessKeySecret)
-	if err != nil {
+func RecoverForError(err error, appId, channelId string) (*ChannelAuth, error) {
+	var fatal bool
+	if err, ok := err.(rtcErrors.Error); ok {
+		switch {
+		case err.ErrorCode() == "IllegalOperationApp":
+			fatal = true
+		case strings.HasPrefix(err.ErrorCode(), "InvalidAccessKeyId"):
+			fatal = true
+		case err.ErrorCode() == "SignatureDoesNotMatch":
+			fatal = true
+		}
+	}
+
+	if fatal {
 		return nil, err
+	}
+
+	var recovered = fmt.Sprintf("RCV-%v", BuildRandom(32))
+	return &ChannelAuth{
+		AppId:      appId,
+		ChannelId:  channelId,
+		Nonce:      recovered,
+		Timestamp:  int64(0),
+		ChannelKey: recovered,
+		Recovered:  true,
+	}, nil
+}
+
+func CreateChannel(
+	appId, channelId, regionId, accessKeyId, accessKeySecret string,
+) (*ChannelAuth, error) {
+	client, err := rtc.NewClientWithAccessKey(regionId, accessKeyId, accessKeySecret)
+	if err != nil {
+		return RecoverForError(err, appId, channelId)
 	}
 
 	client.EnableAsync(5, 10)
@@ -40,7 +70,7 @@ func CreateChannel(appId, channelId,
 	rrs, errs := client.CreateChannelWithChan(r)
 	select {
 	case err := <-errs:
-		return nil, err
+		return RecoverForError(err, appId, channelId)
 	case r0 := <-rrs:
 		return &ChannelAuth{
 			AppId:      appId,
@@ -52,8 +82,8 @@ func CreateChannel(appId, channelId,
 	}
 }
 
-func BuildToken(channel, channelkey,
-	appid, uid, session, nonce string, timestamp int64,
+func BuildToken(
+	channel, channelkey, appid, uid, session, nonce string, timestamp int64,
 ) (token string, err error) {
 	h := sha256.New()
 	if _, err = h.Write([]byte(channel)); err != nil {
@@ -163,9 +193,13 @@ func main() {
 				return
 			}
 
-			channels[channelUrl] = auth
-			ol.Tf(nil, "Create channelId=%v, nonce=%v, timestamp=%v, channelKey=%v",
-				channelId, auth.Nonce, auth.Timestamp, auth.ChannelKey)
+			// If recovered from error, we should never cache it,
+			// and we should try to request again next time.
+			if !auth.Recovered {
+				channels[channelUrl] = auth
+			}
+			ol.Tf(nil, "Create channelId=%v, nonce=%v, timestamp=%v, channelKey=%v, recovered=%v",
+				channelId, auth.Nonce, auth.Timestamp, auth.ChannelKey, auth.Recovered)
 		}()
 		if auth == nil {
 			return
@@ -180,7 +214,7 @@ func main() {
 
 		username := fmt.Sprintf("%s?appid=%s&session=%s&channel=%s&nonce=%s&timestamp=%d",
 			userId, appid, session, channelId, auth.Nonce, auth.Timestamp)
-		ol.Tf(nil, "Sign user=%v, session=%v, token=%v", userId, session, token)
+		ol.Tf(nil, "Sign user=%v, session=%v, token=%v, channelKey=%v", userId, session, token, auth.ChannelKey)
 
 		type TURN struct {
 			Username string `json:"username"`
