@@ -4,17 +4,35 @@ Golang AppServer for RTC.
 
 You could also write AppServer by following languages:
 
-* Python: https://github.com/winlinvip/rtc-app-python
-* Java: https://github.com/winlinvip/rtc-app-java
 * Golang: https://github.com/winlinvip/rtc-app-golang
-* PHP: https://github.com/winlinvip/rtc-app-php
+* Java: https://github.com/winlinvip/rtc-app-java
+* Python: https://github.com/winlinvip/rtc-app-python
 * C#: https://github.com/winlinvip/rtc-app-csharp
 * Nodejs: https://github.com/winlinvip/rtc-app-nodejs
+* PHP: https://github.com/winlinvip/rtc-app-php
 
 For RTC deverloper:
 
 * RTC [workflow](https://help.aliyun.com/document_detail/74889.html).
 * RTC [token generation](https://help.aliyun.com/document_detail/74890.html).
+
+Use OpenAPI to create channel:
+
+* Golang: https://help.aliyun.com/document_detail/74890.html#channel-golang
+* Java: https://help.aliyun.com/document_detail/74890.html#channel-java
+* Python: https://help.aliyun.com/document_detail/74890.html#channel-python
+* C#: https://help.aliyun.com/document_detail/74890.html#channel-csharp
+* Nodejs: https://help.aliyun.com/document_detail/74890.html#channel-nodejs
+* PHP: https://help.aliyun.com/document_detail/74890.html#channel-php
+
+Token generation algorithm:
+
+* Golang: https://help.aliyun.com/document_detail/74890.html#token-golang
+* Java: https://help.aliyun.com/document_detail/74890.html#token-java
+* Python: https://help.aliyun.com/document_detail/74890.html#token-python
+* C#: https://help.aliyun.com/document_detail/74890.html#token-csharp
+* Nodejs: https://help.aliyun.com/document_detail/74890.html#token-nodejs
+* PHP: https://help.aliyun.com/document_detail/74890.html#token-php
 
 ## Usage
 
