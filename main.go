@@ -180,6 +180,7 @@ func main() {
 
 		username := fmt.Sprintf("%s?appid=%s&session=%s&channel=%s&nonce=%s&timestamp=%d",
 			userId, appid, session, channelId, auth.Nonce, auth.Timestamp)
+		ol.Tf(nil, "Sign user=%v, session=%v, token=%v", userId, session, token)
 
 		type TURN struct {
 			Username string `json:"username"`
