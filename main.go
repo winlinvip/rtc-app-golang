@@ -63,7 +63,7 @@ func RecoverForError(err error, appId, channelId string) (*ChannelAuth, error) {
 }
 
 func CreateChannel(
-	appId, channelId, regionId, domain, accessKeyId, accessKeySecret string,
+	appId, channelId, regionId, endpoint, accessKeyId, accessKeySecret string,
 ) (*ChannelAuth, error) {
 	client, err := rtc.NewClientWithAccessKey(regionId, accessKeyId, accessKeySecret)
 	if err != nil {
@@ -84,7 +84,7 @@ func CreateChannel(
 	// that's caused by query endpoint failed.
 	// @remark SDk will cache endpoints, however it will query endpoint for the first
 	//      time, so it's good for performance to set the endpoint.
-	r.SetDomain(domain)
+	r.SetDomain(endpoint)
 
 	rrs, errs := client.CreateChannelWithChan(r)
 	select {
