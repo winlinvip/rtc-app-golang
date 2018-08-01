@@ -86,6 +86,9 @@ func CreateChannel(
 	//      time, so it's good for performance to set the endpoint.
 	r.SetDomain(endpoint)
 
+	// Use HTTP, x3 times faster than HTTPS.
+	r.SetScheme("http")
+
 	rrs, errs := client.CreateChannelWithChan(r)
 	select {
 	case err := <-errs:
