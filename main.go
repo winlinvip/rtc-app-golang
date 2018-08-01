@@ -14,6 +14,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"time"
 )
 
 type ChannelAuth struct {
@@ -23,6 +24,7 @@ type ChannelAuth struct {
 	Timestamp  int64
 	ChannelKey string
 	Recovered  bool
+	RequestID  string
 }
 
 func RecoverForError(err error, appId, channelId string) (*ChannelAuth, error) {
@@ -42,6 +44,11 @@ func RecoverForError(err error, appId, channelId string) (*ChannelAuth, error) {
 		return nil, err
 	}
 
+	var requestID string
+	if err, ok := err.(*rtcErrors.ServerError); ok {
+		requestID = err.RequestId()
+	}
+
 	var recovered = fmt.Sprintf("RCV-%v", BuildRandom(32))
 	return &ChannelAuth{
 		AppId:      appId,
@@ -50,6 +57,7 @@ func RecoverForError(err error, appId, channelId string) (*ChannelAuth, error) {
 		Timestamp:  int64(0),
 		ChannelKey: recovered,
 		Recovered:  true,
+		RequestID:  requestID,
 	}, nil
 }
 
@@ -78,6 +86,7 @@ func CreateChannel(
 			Nonce:      r0.Nonce,
 			Timestamp:  int64(r0.Timestamp),
 			ChannelKey: r0.ChannelKey,
+			RequestID:  r0.RequestId,
 		}, nil
 	}
 }
@@ -177,6 +186,7 @@ func main() {
 		channelUrl := fmt.Sprintf("%v/%v", appid, channelId)
 		ol.Tf(nil, "Request channelId=%v, user=%v, appid=%v", channelId, user, appid)
 
+		startime := time.Now()
 		var auth *ChannelAuth
 		func() {
 			lock.Lock()
@@ -198,8 +208,8 @@ func main() {
 			if !auth.Recovered {
 				channels[channelUrl] = auth
 			}
-			ol.Tf(nil, "Create channelId=%v, nonce=%v, timestamp=%v, channelKey=%v, recovered=%v",
-				channelId, auth.Nonce, auth.Timestamp, auth.ChannelKey, auth.Recovered)
+			ol.Tf(nil, "CreateChannel requestId=%v, cost=%vms, channelId=%v, nonce=%v, timestamp=%v, channelKey=%v, recovered=%v",
+				auth.RequestID, int64(time.Now().Sub(startime)/time.Millisecond), channelId, auth.Nonce, auth.Timestamp, auth.ChannelKey, auth.Recovered)
 		}()
 		if auth == nil {
 			return
@@ -214,7 +224,8 @@ func main() {
 
 		username := fmt.Sprintf("%s?appid=%s&session=%s&channel=%s&nonce=%s&timestamp=%d",
 			userId, appid, session, channelId, auth.Nonce, auth.Timestamp)
-		ol.Tf(nil, "Sign user=%v, session=%v, token=%v, channelKey=%v", userId, session, token, auth.ChannelKey)
+		ol.Tf(nil, "Sign cost=%vms, user=%v, session=%v, token=%v, channelKey=%v",
+			int64(time.Now().Sub(startime)/time.Millisecond), userId, session, token, auth.ChannelKey)
 
 		type TURN struct {
 			Username string `json:"username"`
