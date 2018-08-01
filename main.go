@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	cr "crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
@@ -18,8 +19,8 @@ import (
 )
 
 type ChannelAuth struct {
-	AppId      string
-	ChannelId  string
+	AppID      string
+	ChannelID  string
 	Nonce      string
 	Timestamp  int64
 	ChannelKey string
@@ -27,7 +28,7 @@ type ChannelAuth struct {
 	RequestID  string
 }
 
-func RecoverForError(err error, appId, channelId string) (*ChannelAuth, error) {
+func RecoverForError(err error, appID, channelID string) (*ChannelAuth, error) {
 	var fatal bool
 	if err, ok := err.(rtcErrors.Error); ok {
 		switch {
@@ -52,8 +53,8 @@ func RecoverForError(err error, appId, channelId string) (*ChannelAuth, error) {
 	var recovered = fmt.Sprintf("RCV-%v", BuildRandom(32))
 	fmt.Fprintln(os.Stderr, fmt.Sprintf("Recover from %+v, recovered=%v", err, recovered))
 	return &ChannelAuth{
-		AppId:      appId,
-		ChannelId:  channelId,
+		AppID:      appID,
+		ChannelID:  channelID,
 		Nonce:      recovered,
 		Timestamp:  int64(0),
 		ChannelKey: recovered,
@@ -63,18 +64,18 @@ func RecoverForError(err error, appId, channelId string) (*ChannelAuth, error) {
 }
 
 func CreateChannel(
-	appId, channelId, regionId, endpoint, accessKeyId, accessKeySecret string,
+	appID, channelID, regionID, endpoint, accessKeyID, accessKeySecret string,
 ) (*ChannelAuth, error) {
-	client, err := rtc.NewClientWithAccessKey(regionId, accessKeyId, accessKeySecret)
+	client, err := rtc.NewClientWithAccessKey(regionID, accessKeyID, accessKeySecret)
 	if err != nil {
-		return RecoverForError(err, appId, channelId)
+		return RecoverForError(err, appID, channelID)
 	}
 
 	client.EnableAsync(5, 10)
 
 	r := rtc.CreateCreateChannelRequest()
-	r.AppId = appId
-	r.ChannelId = channelId
+	r.AppId = appID
+	r.ChannelId = channelID
 
 	// Strongly recomment to set the RTC endpoint,
 	// because the exception is not the "right" one if not set.
@@ -92,11 +93,11 @@ func CreateChannel(
 	rrs, errs := client.CreateChannelWithChan(r)
 	select {
 	case err := <-errs:
-		return RecoverForError(err, appId, channelId)
+		return RecoverForError(err, appID, channelID)
 	case r0 := <-rrs:
 		return &ChannelAuth{
-			AppId:      appId,
-			ChannelId:  channelId,
+			AppID:      appID,
+			ChannelID:  channelID,
 			Nonce:      r0.Nonce,
 			Timestamp:  int64(r0.Timestamp),
 			ChannelKey: r0.ChannelKey,
@@ -105,29 +106,20 @@ func CreateChannel(
 	}
 }
 
-func BuildToken(
-	channel, channelkey, appid, uid, session, nonce string, timestamp int64,
+func CreateToken(
+	channelID, channelKey, appID, userID, sessionID, nonce string, timestamp int64,
 ) (token string, err error) {
+	var b bytes.Buffer
+	b.WriteString(channelID)
+	b.WriteString(channelKey)
+	b.WriteString(appID)
+	b.WriteString(userID)
+	b.WriteString(sessionID)
+	b.WriteString(nonce)
+	b.WriteString(fmt.Sprint(timestamp))
+
 	h := sha256.New()
-	if _, err = h.Write([]byte(channel)); err != nil {
-		return "", err
-	}
-	if _, err = h.Write([]byte(channelkey)); err != nil {
-		return "", err
-	}
-	if _, err = h.Write([]byte(appid)); err != nil {
-		return "", err
-	}
-	if _, err = h.Write([]byte(uid)); err != nil {
-		return "", err
-	}
-	if _, err = h.Write([]byte(session)); err != nil {
-		return "", err
-	}
-	if _, err = h.Write([]byte(nonce)); err != nil {
-		return "", err
-	}
-	if _, err = h.Write([]byte(fmt.Sprint(timestamp))); err != nil {
+	if _, err = h.Write([]byte(b.String())); err != nil {
 		return "", err
 	}
 	s := h.Sum(nil)
@@ -159,22 +151,22 @@ func main() {
 		fmt.Println(fmt.Sprintf("	%v --listen=8080 --access-key-id=OGAEkdiL62AkwSgs --access-key-secret=4JaIs4SG4dLwPsQSwGAHzeOQKxO6iw --appid=iwo5l81k --gslb=https://rgslb.rtc.aliyuncs.com", os.Args[0]))
 	}
 
-	var appid, listen, accessKeyId, accessKeySecret, gslb string
-	flag.StringVar(&appid, "appid", "", "app id")
+	var appID, listen, accessKeyID, accessKeySecret, gslb string
+	flag.StringVar(&appID, "appid", "", "app id")
 	flag.StringVar(&listen, "listen", "", "listen port")
-	flag.StringVar(&accessKeyId, "access-key-id", "", "access key id")
+	flag.StringVar(&accessKeyID, "access-key-id", "", "access key id")
 	flag.StringVar(&accessKeySecret, "access-key-secret", "", "access key secret")
 	flag.StringVar(&gslb, "gslb", "", "gslb url")
-	regionId, endpoint := "cn-hangzhou", "rtc.aliyuncs.com"
+	regionID, endpoint := "cn-hangzhou", "rtc.aliyuncs.com"
 
 	flag.Parse()
-	if appid == "" || listen == "" || accessKeyId == "" || accessKeySecret == "" || gslb == "" {
+	if appID == "" || listen == "" || accessKeyID == "" || accessKeySecret == "" || gslb == "" {
 		flag.Usage()
 		os.Exit(-1)
 	}
 
 	ol.Tf(nil, "Server listen=%v, appid=%v, akId=%v, akSecret=%v, gslb=%v, region=%v, domain=%v",
-		listen, appid, accessKeyId, accessKeySecret, gslb, regionId, endpoint)
+		listen, appID, accessKeyID, accessKeySecret, gslb, regionID, endpoint)
 
 	channels := make(map[string]*ChannelAuth)
 	var lock sync.Mutex
@@ -196,9 +188,9 @@ func main() {
 		}
 
 		q := r.URL.Query()
-		channelId, user := q.Get("room"), q.Get("user")
-		channelUrl := fmt.Sprintf("%v/%v", appid, channelId)
-		ol.Tf(nil, "Request channelId=%v, user=%v, appid=%v", channelId, user, appid)
+		channelID, user := q.Get("room"), q.Get("user")
+		channelUrl := fmt.Sprintf("%v/%v", appID, channelID)
+		ol.Tf(nil, "Request channelId=%v, user=%v, appid=%v", channelID, user, appID)
 
 		startime := time.Now()
 		var auth *ChannelAuth
@@ -212,7 +204,7 @@ func main() {
 			}
 
 			var err error
-			if auth, err = CreateChannel(appid, channelId, regionId, endpoint, accessKeyId, accessKeySecret); err != nil {
+			if auth, err = CreateChannel(appID, channelID, regionID, endpoint, accessKeyID, accessKeySecret); err != nil {
 				oh.WriteError(nil, w, r, err)
 				return
 			}
@@ -223,23 +215,23 @@ func main() {
 				channels[channelUrl] = auth
 			}
 			ol.Tf(nil, "CreateChannel requestId=%v, cost=%vms, channelId=%v, nonce=%v, timestamp=%v, channelKey=%v, recovered=%v",
-				auth.RequestID, int64(time.Now().Sub(startime)/time.Millisecond), channelId, auth.Nonce, auth.Timestamp, auth.ChannelKey, auth.Recovered)
+				auth.RequestID, int64(time.Now().Sub(startime)/time.Millisecond), channelID, auth.Nonce, auth.Timestamp, auth.ChannelKey, auth.Recovered)
 		}()
 		if auth == nil {
 			return
 		}
 
-		userId, session := BuildRandom(32), BuildRandom(32)
-		token, err := BuildToken(channelId, auth.ChannelKey, appid, userId, session, auth.Nonce, auth.Timestamp)
+		userID, sessionID := BuildRandom(32), BuildRandom(32)
+		token, err := CreateToken(channelID, auth.ChannelKey, appID, userID, sessionID, auth.Nonce, auth.Timestamp)
 		if err != nil {
 			oh.WriteError(nil, w, r, err)
 			return
 		}
 
 		username := fmt.Sprintf("%s?appid=%s&session=%s&channel=%s&nonce=%s&timestamp=%d",
-			userId, appid, session, channelId, auth.Nonce, auth.Timestamp)
+			userID, appID, sessionID, channelID, auth.Nonce, auth.Timestamp)
 		ol.Tf(nil, "Sign cost=%vms, user=%v, session=%v, token=%v, channelKey=%v",
-			int64(time.Now().Sub(startime)/time.Millisecond), userId, session, token, auth.ChannelKey)
+			int64(time.Now().Sub(startime)/time.Millisecond), userID, sessionID, token, auth.ChannelKey)
 
 		type TURN struct {
 			Username string `json:"username"`
@@ -256,7 +248,7 @@ func main() {
 			TURN      *TURN    `json:"turn"`
 		}
 		oh.WriteData(nil, w, r, &Response{
-			appid, userId, []string{gslb}, session, token, auth.Nonce, auth.Timestamp,
+			appID, userID, []string{gslb}, sessionID, token, auth.Nonce, auth.Timestamp,
 			&TURN{username, token},
 		})
 	})
