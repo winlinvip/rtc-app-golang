@@ -50,6 +50,7 @@ func RecoverForError(err error, appId, channelId string) (*ChannelAuth, error) {
 	}
 
 	var recovered = fmt.Sprintf("RCV-%v", BuildRandom(32))
+	fmt.Fprintln(os.Stderr, fmt.Sprintf("Recover from %+v, recovered=%v", err, recovered))
 	return &ChannelAuth{
 		AppId:      appId,
 		ChannelId:  channelId,
@@ -62,7 +63,7 @@ func RecoverForError(err error, appId, channelId string) (*ChannelAuth, error) {
 }
 
 func CreateChannel(
-	appId, channelId, regionId, accessKeyId, accessKeySecret string,
+	appId, channelId, regionId, domain, accessKeyId, accessKeySecret string,
 ) (*ChannelAuth, error) {
 	client, err := rtc.NewClientWithAccessKey(regionId, accessKeyId, accessKeySecret)
 	if err != nil {
@@ -74,6 +75,16 @@ func CreateChannel(
 	r := rtc.CreateCreateChannelRequest()
 	r.AppId = appId
 	r.ChannelId = channelId
+
+	// Strongly recomment to set the RTC endpoint,
+	// because the exception is not the "right" one if not set.
+	// For example, if access-key-id is invalid:
+	//      1. if endpoint is set, exception is InvalidAccessKeyId.NotFound
+	//      2. if endpoint isn't set, exception is SDK.InvalidRegionId
+	// that's caused by query endpoint failed.
+	// @remark SDk will cache endpoints, however it will query endpoint for the first
+	//      time, so it's good for performance to set the endpoint.
+	r.SetDomain(domain)
 
 	rrs, errs := client.CreateChannelWithChan(r)
 	select {
@@ -151,7 +162,7 @@ func main() {
 	flag.StringVar(&accessKeyId, "access-key-id", "", "access key id")
 	flag.StringVar(&accessKeySecret, "access-key-secret", "", "access key secret")
 	flag.StringVar(&gslb, "gslb", "", "gslb url")
-	regionId := "cn-hangzhou"
+	regionId, endpoint := "cn-hangzhou", "rtc.aliyuncs.com"
 
 	flag.Parse()
 	if appid == "" || listen == "" || accessKeyId == "" || accessKeySecret == "" || gslb == "" {
@@ -159,8 +170,8 @@ func main() {
 		os.Exit(-1)
 	}
 
-	ol.Tf(nil, "Server listen=%v, appid=%v, akId=%v, akSecret=%v, gslb=%v, region=%v",
-		listen, appid, accessKeyId, accessKeySecret, gslb, regionId)
+	ol.Tf(nil, "Server listen=%v, appid=%v, akId=%v, akSecret=%v, gslb=%v, region=%v, domain=%v",
+		listen, appid, accessKeyId, accessKeySecret, gslb, regionId, endpoint)
 
 	channels := make(map[string]*ChannelAuth)
 	var lock sync.Mutex
@@ -198,7 +209,7 @@ func main() {
 			}
 
 			var err error
-			if auth, err = CreateChannel(appid, channelId, regionId, accessKeyId, accessKeySecret); err != nil {
+			if auth, err = CreateChannel(appid, channelId, regionId, endpoint, accessKeyId, accessKeySecret); err != nil {
 				oh.WriteError(nil, w, r, err)
 				return
 			}

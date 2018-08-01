@@ -69,5 +69,6 @@ go run main.go --listen=8080 --access-key-id=OGAEkdiL62AkwSgs \
 
 ## History
 
+* [f41b7cd](https://github.com/winlinvip/rtc-app-golang/commit/f41b7cd8e0ae5a945b09292b6bbeb0d335f413c8), Log the request id and cost in ms.
 * [4b256ca](https://github.com/winlinvip/rtc-app-golang/commit/4b256caaee03c1c80dc29855bb065acbf153f88d), Support recover for some OpenAPI error.
 * Support create channel and sign user token.
