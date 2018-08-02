@@ -102,6 +102,7 @@ func CreateChannel(
 			Nonce:      r0.Nonce,
 			Timestamp:  int64(r0.Timestamp),
 			ChannelKey: r0.ChannelKey,
+			Recovered:  false,
 			RequestID:  r0.RequestId,
 		}, nil
 	}
