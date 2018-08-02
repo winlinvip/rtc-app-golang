@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"flag"
 	"fmt"
+	rtcEndpoints "github.com/aliyun/alibaba-cloud-sdk-go/sdk/endpoints"
 	rtcErrors "github.com/aliyun/alibaba-cloud-sdk-go/sdk/errors"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/rtc"
 	oh "github.com/ossrs/go-oryx-lib/http"
@@ -85,7 +86,7 @@ func CreateChannel(
 	// that's caused by query endpoint failed.
 	// @remark SDk will cache endpoints, however it will query endpoint for the first
 	//      time, so it's good for performance to set the endpoint.
-	r.SetDomain(endpoint)
+	rtcEndpoints.AddEndpointMapping(regionID, r.GetProduct(), endpoint)
 
 	// Use HTTP, x3 times faster than HTTPS.
 	r.SetScheme("http")
