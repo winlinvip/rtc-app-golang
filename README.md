@@ -69,7 +69,7 @@ go run main.go --listen=8080 --access-key-id=OGAEkdiL62AkwSgs \
 
 ## History
 
-* Update SessionID generation algorithm.
+* [2822108](https://github.com/winlinvip/rtc-app-golang/commit/2822108caafe03872e14b022deac4302fb16b6c9), Update SessionID generation algorithm.
 * [a1b5c9d](https://github.com/winlinvip/rtc-app-golang/commit/a1b5c9de0edd2ef23e3874ee9c1f9a737c3afa01), Use HTTP, x3 times faster than HTTPS.
 * [8e2761c](https://github.com/winlinvip/rtc-app-golang/commit/8e2761cd5e57ba87c10b73f0a2c49494090bb259), [19c59e3](https://github.com/winlinvip/rtc-app-golang/commit/19c59e382102de5aff6092615e98381574b2b63a), Set endpoint to get correct error.
 * [f41b7cd](https://github.com/winlinvip/rtc-app-golang/commit/f41b7cd8e0ae5a945b09292b6bbeb0d335f413c8), Log the request id and cost in ms.
