@@ -108,6 +108,28 @@ func CreateChannel(
 	}
 }
 
+func CreateUserID() string {
+	return BuildRandom(32)
+}
+
+func CreateSession(appID, channelID, channelKey, userID string) (string, error) {
+	var b bytes.Buffer
+	b.WriteString(appID)
+	b.WriteString(channelID)
+	b.WriteString(channelKey)
+	b.WriteString(userID)
+	b.WriteString(fmt.Sprint(time.Now().String()))
+
+	h := sha256.New()
+	if _, err := h.Write([]byte(b.String())); err != nil {
+		return "", err
+	}
+
+	s := h.Sum(nil)
+	session := hex.EncodeToString(s)
+	return session, nil
+}
+
 func CreateToken(
 	channelID, channelKey, appID, userID, sessionID, nonce string, timestamp int64,
 ) (token string, err error) {
@@ -124,6 +146,7 @@ func CreateToken(
 	if _, err = h.Write([]byte(b.String())); err != nil {
 		return "", err
 	}
+
 	s := h.Sum(nil)
 	token = hex.EncodeToString(s)
 	return
@@ -223,8 +246,15 @@ func main() {
 			return
 		}
 
-		userID, sessionID := BuildRandom(32), BuildRandom(32)
-		token, err := CreateToken(channelID, auth.ChannelKey, appID, userID, sessionID, auth.Nonce, auth.Timestamp)
+		userID := CreateUserID()
+		sessionID, err := CreateSession(appID, channelID, auth.ChannelKey, userID)
+		if err != nil {
+			oh.WriteError(nil, w, r, err)
+			return
+		}
+
+		token, err := CreateToken(channelID, auth.ChannelKey, appID, userID, sessionID,
+			auth.Nonce, auth.Timestamp)
 		if err != nil {
 			oh.WriteError(nil, w, r, err)
 			return
