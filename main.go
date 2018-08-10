@@ -131,14 +131,14 @@ func CreateSession(appID, channelID, channelKey, userID string) (string, error) 
 }
 
 func CreateToken(
-	channelID, channelKey, appID, userID, sessionID, nonce string, timestamp int64,
+	channelID, channelKey, appID, userID, session, nonce string, timestamp int64,
 ) (token string, err error) {
 	var b bytes.Buffer
 	b.WriteString(channelID)
 	b.WriteString(channelKey)
 	b.WriteString(appID)
 	b.WriteString(userID)
-	b.WriteString(sessionID)
+	b.WriteString(session)
 	b.WriteString(nonce)
 	b.WriteString(fmt.Sprint(timestamp))
 
@@ -247,13 +247,13 @@ func main() {
 		}
 
 		userID := CreateUserID()
-		sessionID, err := CreateSession(appID, channelID, auth.ChannelKey, userID)
+		session, err := CreateSession(appID, channelID, auth.ChannelKey, userID)
 		if err != nil {
 			oh.WriteError(nil, w, r, err)
 			return
 		}
 
-		token, err := CreateToken(channelID, auth.ChannelKey, appID, userID, sessionID,
+		token, err := CreateToken(channelID, auth.ChannelKey, appID, userID, session,
 			auth.Nonce, auth.Timestamp)
 		if err != nil {
 			oh.WriteError(nil, w, r, err)
@@ -261,9 +261,9 @@ func main() {
 		}
 
 		username := fmt.Sprintf("%s?appid=%s&session=%s&channel=%s&nonce=%s&timestamp=%d",
-			userID, appID, sessionID, channelID, auth.Nonce, auth.Timestamp)
+			userID, appID, session, channelID, auth.Nonce, auth.Timestamp)
 		ol.Tf(nil, "Sign cost=%vms, user=%v, session=%v, token=%v, channelKey=%v",
-			int64(time.Now().Sub(startime)/time.Millisecond), userID, sessionID, token, auth.ChannelKey)
+			int64(time.Now().Sub(startime)/time.Millisecond), userID, session, token, auth.ChannelKey)
 
 		type TURN struct {
 			Username string `json:"username"`
@@ -280,7 +280,7 @@ func main() {
 			TURN      *TURN    `json:"turn"`
 		}
 		oh.WriteData(nil, w, r, &Response{
-			appID, userID, []string{gslb}, sessionID, token, auth.Nonce, auth.Timestamp,
+			appID, userID, []string{gslb}, session, token, auth.Nonce, auth.Timestamp,
 			&TURN{username, token},
 		})
 	})
