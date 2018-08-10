@@ -61,7 +61,7 @@ go run main.go --listen=8080 --access-key-id=OGAEkdiL62AkwSgs \
 	--gslb=https://rgslb.rtc.aliyuncs.com
 ```
 
-5. Verify AppServer by [here](http://localhost:8080/app/v1/login?room=5678&user=nvivy&passwd=12345678).
+5. Verify AppServer by [here](http://ossrs.net/talks/ng_index.html#/rtc-check?schema=http&host=127.0.0.1&port=8080&path=/app/v1/login&room=1237&user=jzufp&password=12345678).
 
 > Remark: You can setup client native SDK by `http://30.2.228.19:8080/app/v1`.
 
