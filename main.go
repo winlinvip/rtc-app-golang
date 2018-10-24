@@ -112,33 +112,14 @@ func CreateUserID() string {
 	return BuildRandom(32)
 }
 
-func CreateSession(appID, channelID, channelKey, userID string) (string, error) {
-	var b bytes.Buffer
-	b.WriteString(appID)
-	b.WriteString(channelID)
-	b.WriteString(channelKey)
-	b.WriteString(userID)
-	b.WriteString(fmt.Sprint(time.Now().String()))
-
-	h := sha256.New()
-	if _, err := h.Write([]byte(b.String())); err != nil {
-		return "", err
-	}
-
-	s := h.Sum(nil)
-	session := hex.EncodeToString(s)
-	return session, nil
-}
-
 func CreateToken(
-	channelID, channelKey, appID, userID, session, nonce string, timestamp int64,
+	channelID, channelKey, appID, userID, nonce string, timestamp int64,
 ) (token string, err error) {
 	var b bytes.Buffer
 	b.WriteString(channelID)
 	b.WriteString(channelKey)
 	b.WriteString(appID)
 	b.WriteString(userID)
-	b.WriteString(session)
 	b.WriteString(nonce)
 	b.WriteString(fmt.Sprint(timestamp))
 
@@ -247,23 +228,18 @@ func main() {
 		}
 
 		userID := CreateUserID()
-		session, err := CreateSession(appID, channelID, auth.ChannelKey, userID)
-		if err != nil {
-			oh.WriteError(nil, w, r, err)
-			return
-		}
 
-		token, err := CreateToken(channelID, auth.ChannelKey, appID, userID, session,
+		token, err := CreateToken(channelID, auth.ChannelKey, appID, userID,
 			auth.Nonce, auth.Timestamp)
 		if err != nil {
 			oh.WriteError(nil, w, r, err)
 			return
 		}
 
-		username := fmt.Sprintf("%s?appid=%s&session=%s&channel=%s&nonce=%s&timestamp=%d",
-			userID, appID, session, channelID, auth.Nonce, auth.Timestamp)
-		ol.Tf(nil, "Sign cost=%vms, user=%v, session=%v, token=%v, channelKey=%v",
-			int64(time.Now().Sub(startime)/time.Millisecond), userID, session, token, auth.ChannelKey)
+		username := fmt.Sprintf("%s?appid=%s&channel=%s&nonce=%s&timestamp=%d",
+			userID, appID, channelID, auth.Nonce, auth.Timestamp)
+		ol.Tf(nil, "Sign cost=%vms, user=%v, token=%v, channelKey=%v",
+			int64(time.Now().Sub(startime)/time.Millisecond), userID, token, auth.ChannelKey)
 
 		type TURN struct {
 			Username string `json:"username"`
@@ -273,14 +249,13 @@ func main() {
 			AppId     string   `json:"appid"`
 			UserId    string   `json:"userid"`
 			GSLB      []string `json:"gslb"`
-			Session   string   `json:"session"`
 			Token     string   `json:"token"`
 			Nonce     string   `json:"nonce"`
 			Timestamp int64    `json:"timestamp"`
 			TURN      *TURN    `json:"turn"`
 		}
 		oh.WriteData(nil, w, r, &Response{
-			appID, userID, []string{gslb}, session, token, auth.Nonce, auth.Timestamp,
+			appID, userID, []string{gslb}, token, auth.Nonce, auth.Timestamp,
 			&TURN{username, token},
 		})
 	})
